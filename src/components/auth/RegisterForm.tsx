@@ -72,6 +72,15 @@ const RegisterForm = () => {
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
+        options: {
+          data: {
+            full_name: values.fullName,
+            address: values.address,
+            gender: values.gender,
+            phone_number: values.phoneNumber,
+            user_type: "customer",
+          },
+        },
       });
 
       if (authError) throw authError;
@@ -81,6 +90,7 @@ const RegisterForm = () => {
         const { error: profileError } = await supabase.from("users").upsert(
           {
             id: authData.user.id,
+            email: values.email,
             full_name: values.fullName,
             address: values.address,
             gender: values.gender,

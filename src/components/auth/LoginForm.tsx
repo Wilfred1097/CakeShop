@@ -138,6 +138,16 @@ const LoginForm = () => {
                   Register
                 </Button>
               </div>
+
+              <div className="text-center text-sm">
+                <Button
+                  variant="link"
+                  className="p-0 h-auto font-semibold"
+                  onClick={() => navigate("/admin/login")}
+                >
+                  Admin Login
+                </Button>
+              </div>
             </div>
           </form>
         </Form>

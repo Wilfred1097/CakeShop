@@ -32,6 +32,31 @@ const Header = ({
   const [user, setUser] = useState<any>(null);
   const [localCartCount, setLocalCartCount] = useState(cartItemCount);
 
+  // Function to refresh cart count
+  const refreshCartCount = async () => {
+    if (user?.id) {
+      const { count } = await supabase
+        .from("cart_items")
+        .select("*", { count: "exact" })
+        .eq("user_id", user.id);
+
+      setLocalCartCount(count || 0);
+    }
+  };
+
+  // Listen for cart updates
+  useEffect(() => {
+    const handleCartUpdate = () => {
+      refreshCartCount();
+    };
+
+    window.addEventListener("cart-updated", handleCartUpdate);
+
+    return () => {
+      window.removeEventListener("cart-updated", handleCartUpdate);
+    };
+  }, [user]);
+
   useEffect(() => {
     const fetchUser = async () => {
       const { data } = await supabase.auth.getSession();

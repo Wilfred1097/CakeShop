@@ -183,11 +183,12 @@ const Home = () => {
     fetchData();
   }, []);
 
-  const handleCategoryToggle = (categoryId: string) => {
+  const handleCategoryToggle = (categoryName: string) => {
+    const lowerCaseName = categoryName.toLowerCase();
     setSelectedCategories((prev) =>
-      prev.includes(categoryId)
-        ? prev.filter((id) => id !== categoryId)
-        : [...prev, categoryId],
+      prev.includes(lowerCaseName)
+        ? prev.filter((name) => name !== lowerCaseName)
+        : [...prev, lowerCaseName],
     );
   };
 
@@ -230,7 +231,7 @@ const Home = () => {
             cakes={cakes}
             isLoading={isLoading}
             onCakeClick={handleCakeClick}
-            selectedCategories={selectedCategories.map((c) => c.toLowerCase())}
+            selectedCategories={selectedCategories}
           />
         </section>
       </main>

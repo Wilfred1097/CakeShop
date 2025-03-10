@@ -223,19 +223,22 @@ const Checkout = () => {
 
       if (orderError) throw orderError;
 
-      // Create order items
-      const orderItems = cartItems.map((item) => ({
-        order_id: orderData.id,
-        cake_id: item.cake_id,
-        quantity: item.quantity,
-        price: item.cake.price,
-      }));
+      // Create order items - insert one by one to avoid potential issues
+      for (const item of cartItems) {
+        const { error: orderItemError } = await supabase
+          .from("order_items")
+          .insert({
+            order_id: orderData.id,
+            cake_id: item.cake_id,
+            quantity: item.quantity,
+            price: item.cake.price,
+          });
 
-      const { error: orderItemsError } = await supabase
-        .from("order_items")
-        .insert(orderItems);
-
-      if (orderItemsError) throw orderItemsError;
+        if (orderItemError) {
+          console.error("Error inserting order item:", orderItemError);
+          throw orderItemError;
+        }
+      }
 
       // Clear cart
       const { error: clearCartError } = await supabase
@@ -244,6 +247,10 @@ const Checkout = () => {
         .eq("user_id", user.id);
 
       if (clearCartError) throw clearCartError;
+
+      // Dispatch cart updated event
+      const event = new CustomEvent("cart-updated");
+      window.dispatchEvent(event);
 
       // Navigate to order confirmation
       navigate(`/order-confirmation/${orderData.id}`);

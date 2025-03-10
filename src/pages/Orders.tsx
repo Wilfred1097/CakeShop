@@ -28,21 +28,28 @@ const Orders = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [shopProfile, setShopProfile] = useState<any>(null);
+  const [authData, setAuthData] = useState<any>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchAuthData = async () => {
+      const { data } = await supabase.auth.getSession();
+      setAuthData(data);
+      return data;
+    };
+
+    const fetchOrders = async () => {
       try {
         setIsLoading(true);
         setError(null);
 
         // Check if user is logged in
-        const { data: authData } = await supabase.auth.getSession();
-        if (!authData.session) {
+        const authDataResult = await fetchAuthData();
+        if (!authDataResult.session) {
           navigate("/login");
           return;
         }
 
-        const userId = authData.session.user.id;
+        const userId = authDataResult.session.user.id;
 
         // Fetch orders
         const { data: ordersData, error: ordersError } = await supabase
@@ -110,7 +117,45 @@ const Orders = () => {
       }
     };
 
-    fetchData();
+    fetchOrders();
+
+    // Set up real-time subscription for order updates
+    const setupSubscription = async () => {
+      const authDataResult = await fetchAuthData();
+      if (!authDataResult.session) return;
+
+      const userId = authDataResult.session.user.id;
+
+      const orderSubscription = supabase
+        .channel("orders-updates")
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "orders",
+            filter: `user_id=eq.${userId}`,
+          },
+          (payload) => {
+            console.log("Order update received:", payload);
+            // Refetch orders when an update occurs with a slight delay
+            setTimeout(() => {
+              fetchOrders();
+            }, 500);
+          },
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(orderSubscription);
+      };
+    };
+
+    const unsubscribe = setupSubscription();
+
+    return () => {
+      unsubscribe.then((unsub) => unsub && unsub());
+    };
   }, [navigate]);
 
   const formatDate = (dateString: string) => {
@@ -133,6 +178,10 @@ const Orders = () => {
       case "delivered":
         return "bg-green-100 text-green-800";
       case "cancelled":
+        return "bg-red-100 text-red-800";
+      case "accepted":
+        return "bg-green-100 text-green-800";
+      case "declined":
         return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";

@@ -60,17 +60,17 @@ const CakeFilters = ({
               <Badge
                 key={category.id}
                 variant={
-                  selectedCategories.includes(category.id)
+                  selectedCategories.includes(category.name.toLowerCase())
                     ? "default"
                     : "outline"
                 }
                 className={cn(
                   "cursor-pointer hover:bg-primary/90 transition-colors px-3 py-1",
-                  selectedCategories.includes(category.id)
+                  selectedCategories.includes(category.name.toLowerCase())
                     ? "bg-primary text-primary-foreground"
                     : "bg-background hover:bg-secondary",
                 )}
-                onClick={() => onCategoryToggle(category.id)}
+                onClick={() => onCategoryToggle(category.name)}
               >
                 {category.name}
               </Badge>

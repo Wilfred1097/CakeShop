@@ -68,7 +68,7 @@ const Footer = ({
               </li>
               <li>
                 <Link
-                  to="/admin"
+                  to="/admin/login"
                   className="text-sm text-gray-600 hover:text-primary transition-colors"
                 >
                   Admin

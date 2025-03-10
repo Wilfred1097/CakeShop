@@ -10,7 +10,8 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { ShoppingCart, Heart, Share2 } from "lucide-react";
+import { ShoppingCart, Share2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 interface CakeDetailModalProps {
   open?: boolean;
@@ -60,7 +61,10 @@ const CakeDetailModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl p-0 overflow-hidden bg-white">
+      <DialogContent
+        className="max-w-4xl p-0 overflow-hidden bg-white"
+        aria-describedby="cake-detail-description"
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
           {/* Left side - Image gallery */}
           <div className="bg-gray-50 p-6 flex flex-col">
@@ -118,7 +122,9 @@ const CakeDetailModal = ({
             <div className="space-y-4 flex-grow">
               <div>
                 <h3 className="font-semibold mb-2">Description</h3>
-                <p className="text-gray-700">{cake.description}</p>
+                <p id="cake-detail-description" className="text-gray-700">
+                  {cake.description}
+                </p>
               </div>
 
               {cake.ingredients && (
@@ -153,18 +159,15 @@ const CakeDetailModal = ({
             <DialogFooter className="mt-6 flex flex-col sm:flex-row gap-2">
               <div className="flex gap-2">
                 <Button variant="outline" size="icon">
-                  <Heart className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="icon">
                   <Share2 className="h-4 w-4" />
                 </Button>
               </div>
               <Button
                 className="flex-1"
                 size="lg"
-                onClick={() => {
-                  // Check if user is logged in
-                  const addToCart = async () => {
+                onClick={async () => {
+                  try {
+                    // Check if user is logged in
                     const { data } = await supabase.auth.getSession();
                     if (!data.session) {
                       window.location.href = "/login";
@@ -183,12 +186,15 @@ const CakeDetailModal = ({
                       return;
                     }
 
-                    // Close modal and refresh page to update cart count
+                    // Close modal and update cart count without page reload
                     onOpenChange(false);
-                    window.location.reload();
-                  };
 
-                  addToCart();
+                    // Dispatch a custom event to notify cart components to refresh
+                    const event = new CustomEvent("cart-updated");
+                    window.dispatchEvent(event);
+                  } catch (error) {
+                    console.error("Error adding to cart:", error);
+                  }
                 }}
               >
                 <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart

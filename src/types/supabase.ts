@@ -160,13 +160,6 @@ export type Database = {
             referencedRelation: "cakes"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "cart_items_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
         ]
       }
       categories: {
@@ -263,15 +256,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "orders_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       shop_profile: {
         Row: {
@@ -323,31 +308,37 @@ export type Database = {
       }
       users: {
         Row: {
-          address: string
-          created_at: string
-          full_name: string
-          gender: string
+          address: string | null
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          gender: string | null
           id: string
-          phone_number: string
+          phone_number: string | null
           updated_at: string | null
+          user_type: string | null
         }
         Insert: {
-          address: string
-          created_at?: string
-          full_name: string
-          gender: string
+          address?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          gender?: string | null
           id: string
-          phone_number: string
+          phone_number?: string | null
           updated_at?: string | null
+          user_type?: string | null
         }
         Update: {
-          address?: string
-          created_at?: string
-          full_name?: string
-          gender?: string
+          address?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          gender?: string | null
           id?: string
-          phone_number?: string
+          phone_number?: string | null
           updated_at?: string | null
+          user_type?: string | null
         }
         Relationships: []
       }
@@ -356,7 +347,43 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_all_orders: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string
+          id: string
+          phone_number: string
+          shipping_address: string
+          status: string
+          total_amount: number
+          updated_at: string | null
+          user_id: string
+        }[]
+      }
+      get_order_by_id: {
+        Args: {
+          order_id: string
+        }
+        Returns: {
+          created_at: string
+          id: string
+          phone_number: string
+          shipping_address: string
+          status: string
+          total_amount: number
+          updated_at: string | null
+          user_id: string
+        }[]
+      }
+      get_user_for_order: {
+        Args: {
+          user_id: string
+        }
+        Returns: {
+          email: string
+          full_name: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

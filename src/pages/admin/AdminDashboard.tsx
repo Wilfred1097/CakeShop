@@ -1,8 +1,96 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Cake, Tag, ShoppingCart, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase";
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
+  const [stats, setStats] = useState({
+    cakeCount: 0,
+    categoryCount: 0,
+    orderCount: 0,
+    customerCount: 0,
+  });
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [popularCakes, setPopularCakes] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        // Fetch cake count
+        const { count: cakeCount } = await supabase
+          .from("cakes")
+          .select("*", { count: "exact" });
+
+        // Fetch category count
+        const { count: categoryCount } = await supabase
+          .from("categories")
+          .select("*", { count: "exact" });
+
+        // Fetch order count
+        const { count: orderCount } = await supabase
+          .from("orders")
+          .select("*", { count: "exact" });
+
+        // Fetch customer count
+        const { count: customerCount } = await supabase
+          .from("users")
+          .select("*", { count: "exact" })
+          .eq("user_type", "customer");
+
+        setStats({
+          cakeCount: cakeCount || 0,
+          categoryCount: categoryCount || 0,
+          orderCount: orderCount || 0,
+          customerCount: customerCount || 0,
+        });
+
+        // Fetch recent orders
+        const { data: orders } = await supabase
+          .from("orders")
+          .select(
+            `
+            id,
+            status,
+            total_amount,
+            created_at,
+            users:user_id (full_name)
+          `,
+          )
+          .order("created_at", { ascending: false })
+          .limit(3);
+
+        setRecentOrders(orders || []);
+
+        // For now, we'll use static data for popular cakes
+        // In a real app, you would calculate this from order_items
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffHours = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 60 * 60),
+    );
+
+    if (diffHours < 24) {
+      return diffHours === 0
+        ? "Just now"
+        : `${diffHours} hour${diffHours !== 1 ? "s" : ""} ago`;
+    } else if (diffHours < 48) {
+      return "Yesterday";
+    } else {
+      return date.toLocaleDateString();
+    }
+  };
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Dashboard</h1>
@@ -14,8 +102,8 @@ const AdminDashboard = () => {
             <Cake className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">+2 from last month</p>
+            <div className="text-2xl font-bold">{stats.cakeCount}</div>
+            <p className="text-xs text-muted-foreground">Total cake products</p>
           </CardContent>
         </Card>
 
@@ -25,8 +113,8 @@ const AdminDashboard = () => {
             <Tag className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8</div>
-            <p className="text-xs text-muted-foreground">+1 from last month</p>
+            <div className="text-2xl font-bold">{stats.categoryCount}</div>
+            <p className="text-xs text-muted-foreground">Total categories</p>
           </CardContent>
         </Card>
 
@@ -36,8 +124,8 @@ const AdminDashboard = () => {
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">24</div>
-            <p className="text-xs text-muted-foreground">+5 from last month</p>
+            <div className="text-2xl font-bold">{stats.orderCount}</div>
+            <p className="text-xs text-muted-foreground">Total orders</p>
           </CardContent>
         </Card>
 
@@ -47,51 +135,63 @@ const AdminDashboard = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">120</div>
-            <p className="text-xs text-muted-foreground">+12 from last month</p>
+            <div className="text-2xl font-bold">{stats.customerCount}</div>
+            <p className="text-xs text-muted-foreground">
+              Registered customers
+            </p>
           </CardContent>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Recent Orders</CardTitle>
+            <Button
+              variant="link"
+              size="sm"
+              onClick={() => navigate("/admin/orders")}
+            >
+              View All
+            </Button>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-center">
-                <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center mr-3">
-                  <ShoppingCart className="h-5 w-5 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Order #1234</p>
-                  <p className="text-xs text-muted-foreground">2 hours ago</p>
-                </div>
-                <div className="text-sm font-medium">₱89.99</div>
-              </div>
+              {recentOrders.length > 0 ? (
+                recentOrders.map((order) => (
+                  <div key={order.id} className="flex items-center">
+                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center mr-3">
+                      <ShoppingCart className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">
+                        Order #{order.id.slice(0, 8)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDate(order.created_at)}
+                      </p>
+                    </div>
+                    <div className="text-sm font-medium">
+                      ₱{order.total_amount.toFixed(2)}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No recent orders
+                </p>
+              )}
 
-              <div className="flex items-center">
-                <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center mr-3">
-                  <ShoppingCart className="h-5 w-5 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Order #1233</p>
-                  <p className="text-xs text-muted-foreground">5 hours ago</p>
-                </div>
-                <div className="text-sm font-medium">₱54.99</div>
-              </div>
-
-              <div className="flex items-center">
-                <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center mr-3">
-                  <ShoppingCart className="h-5 w-5 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Order #1232</p>
-                  <p className="text-xs text-muted-foreground">Yesterday</p>
-                </div>
-                <div className="text-sm font-medium">₱124.99</div>
-              </div>
+              {recentOrders.length > 0 && (
+                <Button
+                  variant="outline"
+                  className="w-full mt-2"
+                  size="sm"
+                  onClick={() => navigate("/admin/orders")}
+                >
+                  View All Orders
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>

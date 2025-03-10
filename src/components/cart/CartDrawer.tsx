@@ -44,6 +44,13 @@ const CartDrawer = ({ open, onOpenChange, userId }: CartDrawerProps) => {
     }
   }, [open, userId]);
 
+  // Refresh cart when component mounts
+  useEffect(() => {
+    if (userId) {
+      fetchCartItems();
+    }
+  }, [userId]);
+
   const fetchCartItems = async () => {
     if (!userId) return;
 

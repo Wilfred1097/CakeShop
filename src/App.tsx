@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { useRoutes, Route, Routes } from "react-router-dom";
-import appRoutes from "./routes";
+import routes from "./routes";
 import tempoRoutes from "tempo-routes";
 
 function App() {
@@ -8,7 +8,7 @@ function App() {
     <Suspense fallback={<p>Loading...</p>}>
       <>
         <Routes>
-          {appRoutes.map((route) => {
+          {routes.map((route) => {
             if (route.children) {
               return (
                 <Route
@@ -36,7 +36,9 @@ function App() {
             );
           })}
         </Routes>
-        {import.meta.env.VITE_TEMPO === "true" && useRoutes(tempoRoutes)}
+        {import.meta.env.VITE_TEMPO === "true" && (
+          <div style={{ display: "none" }}>{useRoutes(tempoRoutes)}</div>
+        )}
       </>
     </Suspense>
   );

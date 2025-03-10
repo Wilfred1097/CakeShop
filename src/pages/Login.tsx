@@ -14,7 +14,18 @@ const Login = () => {
     const checkUser = async () => {
       const { data } = await supabase.auth.getSession();
       if (data.session) {
-        navigate("/admin");
+        // Check if user is admin
+        const { data: userData, error: userError } = await supabase
+          .from("users")
+          .select("user_type")
+          .eq("id", data.session.user.id)
+          .single();
+
+        if (!userError && userData.user_type === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/customer/dashboard");
+        }
       }
     };
 
@@ -56,7 +67,7 @@ const Login = () => {
           {shopName}
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Sign in to manage your cake shop
+          Sign in to your customer account
         </p>
       </div>
 

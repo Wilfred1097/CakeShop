@@ -3,6 +3,8 @@ import Home from "./components/home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import RegisterSuccess from "./pages/RegisterSuccess";
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminRegister from "./pages/admin/AdminRegister";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import CakesPage from "./pages/admin/cakes/CakesPage";
@@ -12,6 +14,8 @@ import CategoriesPage from "./pages/admin/categories/CategoriesPage";
 import AddCategoryPage from "./pages/admin/categories/AddCategoryPage";
 import EditCategoryPage from "./pages/admin/categories/EditCategoryPage";
 import ShopProfilePage from "./pages/admin/profile/ShopProfilePage";
+import OrdersPage from "./pages/admin/orders/OrdersPage";
+import OrderDetailPage from "./pages/admin/orders/OrderDetailPage";
 
 // Import the new pages
 import Checkout from "./pages/Checkout";
@@ -32,6 +36,14 @@ const routes: RouteObject[] = [
   {
     path: "/register",
     element: <Register />,
+  },
+  {
+    path: "/admin/login",
+    element: <AdminLogin />,
+  },
+  {
+    path: "/admin/register",
+    element: <AdminRegister />,
   },
   {
     path: "/register-success",
@@ -93,6 +105,14 @@ const routes: RouteObject[] = [
       {
         path: "profile",
         element: <ShopProfilePage />,
+      },
+      {
+        path: "orders",
+        element: <OrdersPage />,
+      },
+      {
+        path: "orders/:orderId",
+        element: <OrderDetailPage />,
       },
     ],
   },

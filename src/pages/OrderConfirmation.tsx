@@ -38,7 +38,7 @@ const OrderConfirmation = () => {
   const [shopProfile, setShopProfile] = useState<any>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchOrderData = async () => {
       try {
         setIsLoading(true);
         setError(null);
@@ -51,6 +51,15 @@ const OrderConfirmation = () => {
         }
 
         const userId = authData.session.user.id;
+
+        // Fetch user profile
+        const { data: userData, error: userError } = await supabase
+          .from("users")
+          .select("full_name, email, phone_number, address")
+          .eq("id", userId)
+          .single();
+
+        if (userError) throw userError;
 
         // Fetch order details
         const { data: orderData, error: orderError } = await supabase
@@ -71,12 +80,16 @@ const OrderConfirmation = () => {
             cake_id,
             quantity,
             price,
+            order_id,
             cakes:cake_id (id, name)
           `,
           )
           .eq("order_id", orderId);
 
-        if (orderItemsError) throw orderItemsError;
+        if (orderItemsError) {
+          console.error("Error fetching order items:", orderItemsError);
+          throw orderItemsError;
+        }
 
         // Fetch cake images
         const orderItemsWithImages = await Promise.all(
@@ -147,8 +160,33 @@ const OrderConfirmation = () => {
     };
 
     if (orderId) {
-      fetchData();
+      fetchOrderData();
     }
+
+    // Set up real-time subscription for order updates
+    const orderSubscription = supabase
+      .channel("order-updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "orders",
+          filter: `id=eq.${orderId}`,
+        },
+        (payload) => {
+          console.log("Order update received:", payload);
+          // Refetch order data when an update occurs
+          setTimeout(() => {
+            fetchOrderData();
+          }, 500);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(orderSubscription);
+    };
   }, [orderId, navigate]);
 
   const formatDate = (dateString: string) => {
@@ -258,29 +296,59 @@ const OrderConfirmation = () => {
                       </div>
                     </div>
 
-                    <div className="border-t pt-4 mt-4">
+                    {/* Order Items */}
+                    <div className="pt-4 mt-4">
                       <h3 className="font-medium mb-4">Order Items</h3>
                       <div className="space-y-4">
-                        {order?.items.map((item) => (
-                          <div key={item.id} className="flex items-center py-2">
-                            <div className="h-16 w-16 rounded-md overflow-hidden flex-shrink-0">
-                              <img
-                                src={item.cake.image}
-                                alt={item.cake.name}
-                                className="h-full w-full object-cover"
-                              />
+                        {order?.items && order.items.length > 0 ? (
+                          order.items.map((item) => (
+                            <div
+                              key={item.id}
+                              className="flex items-center py-2 border-b last:border-0"
+                            >
+                              <div className="h-16 w-16 rounded-md overflow-hidden flex-shrink-0">
+                                <img
+                                  src={item.cake.image}
+                                  alt={item.cake.name}
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                              <div className="ml-4 flex-1">
+                                <h3 className="font-medium">
+                                  {item.cake.name}
+                                </h3>
+                                <p className="text-sm text-muted-foreground">
+                                  ₱{item.price.toFixed(2)} x {item.quantity}
+                                </p>
+                              </div>
+                              <div className="ml-4 font-medium">
+                                ₱{(item.price * item.quantity).toFixed(2)}
+                              </div>
                             </div>
-                            <div className="ml-4 flex-1">
-                              <h3 className="font-medium">{item.cake.name}</h3>
-                              <p className="text-sm text-muted-foreground">
-                                ₱{item.price.toFixed(2)} x {item.quantity}
-                              </p>
-                            </div>
-                            <div className="ml-4 font-medium">
-                              ₱{(item.price * item.quantity).toFixed(2)}
-                            </div>
+                          ))
+                        ) : (
+                          <div className="text-center py-4">
+                            <p className="text-muted-foreground">
+                              No items found in this order.
+                            </p>
                           </div>
-                        ))}
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Order Summary */}
+                    <div className="border-t pt-4 mt-4">
+                      <div className="flex justify-between py-2">
+                        <span className="text-muted-foreground">Subtotal</span>
+                        <span>₱{order?.total_amount.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between py-2">
+                        <span className="text-muted-foreground">Shipping</span>
+                        <span>Free</span>
+                      </div>
+                      <div className="flex justify-between py-2 text-lg font-bold">
+                        <span>Total</span>
+                        <span>₱{order?.total_amount.toFixed(2)}</span>
                       </div>
                     </div>
                   </div>

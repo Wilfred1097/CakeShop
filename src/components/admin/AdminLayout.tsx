@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Cake, Settings, LogOut, User } from "lucide-react";
+import { Cake, Settings, LogOut, User, ShoppingBag } from "lucide-react";
 
 const AdminLayout = () => {
   const navigate = useNavigate();
@@ -119,7 +119,7 @@ const AdminLayout = () => {
         {/* Admin Navigation */}
         <div className="container mx-auto px-4 pb-2">
           <Tabs defaultValue="cakes" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex">
+            <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
               <TabsTrigger
                 value="cakes"
                 onClick={() => navigate("/admin/cakes")}
@@ -135,6 +135,14 @@ const AdminLayout = () => {
               >
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Categories</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="orders"
+                onClick={() => navigate("/admin/orders")}
+                className="flex items-center"
+              >
+                <ShoppingBag className="mr-2 h-4 w-4" />
+                <span>Orders</span>
               </TabsTrigger>
               <TabsTrigger
                 value="profile"

@@ -89,11 +89,22 @@ const CakeGrid = ({
   const filteredCakes =
     selectedCategories.length > 0
       ? cakes.filter((cake) =>
-          cake.categories.some((category) =>
-            selectedCategories.includes(category),
-          ),
+          cake.categories.some((category) => {
+            // Convert both to lowercase for case-insensitive comparison
+            return selectedCategories.includes(category.toLowerCase());
+          }),
         )
       : cakes;
+
+  console.log("Selected categories:", selectedCategories);
+  console.log(
+    "Filtered cakes:",
+    filteredCakes.map((c) => c.name),
+  );
+  console.log(
+    "All cakes categories:",
+    cakes.map((c) => ({ name: c.name, categories: c.categories })),
+  );
 
   // Render loading skeletons
   if (isLoading) {
